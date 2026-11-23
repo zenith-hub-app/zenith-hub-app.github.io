@@ -1,0 +1,18 @@
+{
+  "name": "Zenith Hub",
+  "short_name": "Hub",
+  "description": "O mural do time do Zenith: conversa com os agentes.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0e",
+  "theme_color": "#0a0a0e",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icone-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

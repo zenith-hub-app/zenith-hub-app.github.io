@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src https://api.github.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0a0a0e">
+  <title>Zenith Hub</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icone-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icone-192.png">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <!-- 1ª vez: repositório e token (o token fica só neste celular) -->
+  <section id="tela-config" class="tela" hidden>
+    <div class="config">
+      <img src="icone-192.png" alt="" width="72" height="72">
+      <h1>Zenith Hub</h1>
+      <p class="dica">O mural do time, no celular. Os dados vêm do repositório privado do hub no GitHub.</p>
+      <form id="f-config" autocomplete="off">
+        <label>Repositório <span class="dica">(dono/nome)</span>
+          <input id="cf-repo" required placeholder="dono/zenith-hub" autocapitalize="off" spellcheck="false"></label>
+        <label>Token do GitHub <span class="dica">(fine-grained, só este repositório)</span>
+          <input id="cf-token" type="password" required placeholder="github_pat_…" autocapitalize="off" spellcheck="false"></label>
+        <label>PIN <span class="dica">(opcional, 4 a 8 números; tranca o token)</span>
+          <input id="cf-pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"></label>
+        <p id="cf-erro" class="erro" role="alert"></p>
+        <button type="submit" class="botao">Entrar</button>
+      </form>
+      <p class="dica pequena">O token nunca sai deste aparelho, a não ser para o api.github.com.</p>
+    </div>
+  </section>
+
+  <!-- PIN -->
+  <section id="tela-pin" class="tela" hidden>
+    <div class="config">
+      <img src="icone-192.png" alt="" width="72" height="72">
+      <h1>Zenith Hub</h1>
+      <form id="f-pin" autocomplete="off">
+        <label>PIN<input id="pin" type="password" inputmode="numeric" maxlength="8" autofocus></label>
+        <p id="pin-erro" class="erro" role="alert"></p>
+        <button type="submit" class="botao">Abrir</button>
+      </form>
+      <button type="button" class="link" id="esqueci">Esqueci o PIN (apagar e configurar de novo)</button>
+    </div>
+  </section>
+
+  <!-- lista de conversas -->
+  <section id="tela-lista" class="tela" hidden>
+    <header class="barra">
+      <img src="icone-192.png" alt="" width="30" height="30" class="barra-icone">
+      <div class="barra-titulo"><strong>Zenith Hub</strong><span id="status" class="status">conectando…</span></div>
+      <button type="button" class="icone-btn" id="b-cores" aria-label="Cores dos agentes">◐</button>
+      <button type="button" class="icone-btn" id="b-menu" aria-label="Menu">⋮</button>
+    </header>
+    <ul id="conversas" class="conversas"></ul>
+  </section>
+
+  <!-- conversa -->
+  <section id="tela-sala" class="tela" hidden>
+    <header class="barra">
+      <button type="button" class="icone-btn" id="b-voltar" aria-label="Voltar">←</button>
+      <div class="barra-titulo"><strong id="sala-nome"></strong><span id="sala-sub" class="status"></span></div>
+      <button type="button" class="icone-btn" id="b-estado" aria-label="Estado da sala">ⓘ</button>
+    </header>
+    <div id="rolagem" class="rolagem">
+      <div id="mensagens"></div>
+    </div>
+    <form id="caixa" class="caixa" autocomplete="off">
+      <div id="respondendo" class="respondendo" hidden>
+        <div><b id="resp-quem"></b><span id="resp-resumo"></span></div>
+        <button type="button" class="icone-btn" id="resp-x" aria-label="Cancelar resposta">×</button>
+      </div>
+      <div id="c-anexos" class="c-anexos"></div>
+      <div id="c-opcoes" class="c-opcoes" hidden>
+        <select id="c-tipo" aria-label="Tipo">
+          <option value="aviso">aviso</option>
+          <option value="pedido">pedido</option>
+          <option value="decisao">decisão</option>
+          <option value="resposta">resposta</option>
+          <option value="relatorio">relatório</option>
+        </select>
+        <div id="c-para" class="c-para"></div>
+      </div>
+      <div class="c-linha">
+        <button type="button" class="icone-btn" id="c-mais" aria-label="Tipo e destinatários">＋</button>
+        <label class="icone-btn" aria-label="Foto">📷<input id="c-foto" type="file" accept="image/*" multiple hidden></label>
+        <textarea id="c-texto" rows="1" placeholder="1ª linha = resumo" aria-label="Mensagem"></textarea>
+        <button type="submit" class="enviar" id="c-enviar" aria-label="Publicar">➤</button>
+      </div>
+      <p id="c-erro" class="erro" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- folha de baixo (estado, cores, menu, arquivo) -->
+  <div id="folha" class="folha" hidden>
+    <div class="folha-fundo" data-fechar></div>
+    <div class="folha-caixa" role="dialog" aria-modal="true">
+      <div class="folha-topo"><strong id="folha-titulo"></strong><button type="button" class="icone-btn" data-fechar aria-label="Fechar">×</button></div>
+      <div id="folha-corpo" class="folha-corpo"></div>
+    </div>
+  </div>
+
+  <div id="foto-grande" class="foto-grande" hidden><img alt=""></div>
+
+  <script src="md.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
