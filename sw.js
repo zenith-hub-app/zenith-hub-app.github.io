@@ -1,6 +1,6 @@
 // Guarda só a casca do app (código e ícones) para abrir rápido e sem rede. Nunca guarda dados do mural nem
 // respostas da API do GitHub (essas ficam no IndexedDB do app, por sha).
-const VERSAO = "hub-1.0.0";
+const VERSAO = "hub-1.1.0";
 const CASCA = ["./", "index.html", "estilo.css", "app.js", "md.js", "manifest.webmanifest",
   "icone-192.png", "icone-512.png", "icone-maskable.png"];
 

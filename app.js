@@ -5,7 +5,7 @@
 
 "use strict";
 
-const VERSAO = "1.0.0";
+const VERSAO = "1.1.0";
 const API = "https://api.github.com";
 const NOME_MSG = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})_([a-z0-9]+)(?:-(\d+))?\.md$/;
 const NOME_SEM_MD = /^\d{4}-\d{2}-\d{2}T\d{6}_[a-z0-9]+(?:-\d+)?$/;
@@ -65,6 +65,37 @@ async function decifrar(c, pin) {
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytesDeB64(c.iv) },
     await chaveDoPin(pin, bytesDeB64(c.s)), bytesDeB64(c.ct));
   return new TextDecoder().decode(pt);
+}
+
+// "Lembrar neste celular": depois do 1º PIN certo, o token é cifrado de novo com uma chave AES que o navegador
+// guarda no IndexedDB como NÃO exportável (nenhum script consegue ler os bytes dela, só usá-la nesta origem).
+// Assim o app abre direto. A proteção passa a ser o bloqueio do próprio celular; "Trancar" no menu volta ao PIN.
+async function lembrar(tk) {
+  try {
+    const chave = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, chave, new TextEncoder().encode(tk));
+    await cache.set("k:lembrar", chave);
+    if (!(await cache.get("k:lembrar"))) return;   // sem IndexedDB: segue pedindo o PIN
+    cfg.lembrado = { iv: b64DeBytes(iv), ct: b64DeBytes(new Uint8Array(ct)) };
+    gravar("cfg", cfg);
+    navigator.storage?.persist?.().catch(() => {});
+  } catch { /* segue pedindo o PIN */ }
+}
+async function lembrado() {
+  try {
+    const chave = await cache.get("k:lembrar");
+    if (!chave || !cfg.lembrado) return null;
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytesDeB64(cfg.lembrado.iv) }, chave,
+      bytesDeB64(cfg.lembrado.ct));
+    return new TextDecoder().decode(pt);
+  } catch { return null; }
+}
+async function trancar() {
+  delete cfg.lembrado;
+  gravar("cfg", cfg);
+  await cache.set("k:lembrar", null);
+  location.reload();
 }
 
 // ================================================================== cache (IndexedDB): conteúdo por sha do Git
@@ -496,6 +527,7 @@ function abrirMenu() {
     <button type="button" class="menu-btn" data-acao="atualizar">Atualizar agora</button>
     <button type="button" class="menu-btn" data-acao="cores">Cores do time</button>
     <button type="button" class="menu-btn" data-acao="trocar">Trocar token ou repositório</button>
+    ${cfg.cifra ? `<button type="button" class="menu-btn" data-acao="trancar">Trancar (pedir o PIN de novo)</button>` : ""}
     <button type="button" class="menu-btn perigo" data-acao="apagar">Apagar tudo deste celular</button>
     <p class="dica pequena">Repositório ${esc(cfg.repo)} (${esc(cfg.branch)}) · versão ${VERSAO}<br>
     O mural é informação, não ordem: para um agente agir, mande na conversa dele.</p>`);
@@ -802,6 +834,7 @@ document.addEventListener("click", (e) => {
   if (acao === "atualizar") { fecharFolha(); atualizar(true); }
   if (acao === "cores") abrirCores();
   if (acao === "trocar") { fecharFolha(); abrirConfig(""); }
+  if (acao === "trancar") trancar();
   if (acao === "apagar" && confirm("Apagar o token e o cache deste celular? O mural no GitHub não muda.")) apagarTudo();
 });
 $("#b-voltar").addEventListener("click", () => { if (history.length > 1) history.back(); else location.hash = ""; });
@@ -840,6 +873,7 @@ $("#f-config").addEventListener("submit", async (e) => {
     if (pin) cfg.cifra = await cifrar(tk, pin); else cfg.token = tk;
     if (ler("cfg", null)?.repo !== repo) { arvore = null; gravar("arvore", null); vistos = {}; gravar("vistos", {}); await cache.limpar(); }
     gravar("cfg", cfg);
+    if (pin) await lembrar(tk);
     $("#cf-token").value = "";
     await iniciar();
   } catch (err) {
@@ -855,6 +889,7 @@ $("#f-pin").addEventListener("submit", async (e) => {
   try {
     token = await decifrar(cfg.cifra, $("#pin").value.trim());
     $("#pin").value = "";
+    await lembrar(token);
     await iniciar();
   } catch {
     $("#pin-erro").textContent = "PIN errado.";
@@ -886,5 +921,11 @@ async function iniciar() {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 if (!cfg) abrirConfig("");
-else if (cfg.cifra) { mostrar("tela-pin"); setTimeout(() => $("#pin").focus(), 50); }
+else if (cfg.cifra) {
+  lembrado().then((tk) => {
+    if (tk) { token = tk; iniciar(); return; }
+    mostrar("tela-pin");
+    setTimeout(() => $("#pin").focus(), 50);
+  });
+}
 else { token = cfg.token; iniciar(); }
