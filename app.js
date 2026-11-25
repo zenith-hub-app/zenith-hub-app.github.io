@@ -5,12 +5,12 @@
 
 "use strict";
 
-const VERSAO = "1.1.0";
+const VERSAO = "1.1.1";
 const API = "https://api.github.com";
 const NOME_MSG = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})_([a-z0-9]+)(?:-(\d+))?\.md$/;
 const NOME_SEM_MD = /^\d{4}-\d{2}-\d{2}T\d{6}_[a-z0-9]+(?:-\d+)?$/;
 const TIPOS = { aviso: "aviso", pedido: "pedido", decisao: "decisão", relatorio: "relatório", resposta: "resposta" };
-const ORDEM_SALAS = ["geral", "app", "qa", "seguranca", "criativos", "marketing", "site", "apices"];
+const ORDEM_SALAS = ["geral", "app", "qa", "seguranca", "criativos", "marketing", "site", "apices", "biblioteca"];
 // ordem de importância (pedido do Rogério, 22/11): ARC no topo, no preto
 const ORDEM_AGENTES = ["arc", "app", "qa", "seguranca", "roteiro", "marketing", "site", "relatorios", "apices",
   "biblioteca", "lab"];
@@ -23,7 +23,7 @@ const PAPEIS = {
 const NOMES = { arc: "ARC", orquestrador: "ARC", rogerio: "Rogério", apices: "ápices", relatorios: "relatórios",
   seguranca: "segurança" };
 const COR_DA_SALA = { geral: "arc", app: "app", qa: "qa", seguranca: "seguranca", criativos: "roteiro",
-  marketing: "marketing", site: "site", apices: "apices", tudo: "rogerio" };
+  marketing: "marketing", site: "site", apices: "apices", biblioteca: "biblioteca", tudo: "rogerio" };
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
   "novembro", "dezembro"];
 const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
